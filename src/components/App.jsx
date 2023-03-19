@@ -1,36 +1,33 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 
-export class App extends Component {
-  state = {
-    textSearch: '',
-    page: 1,
-  };
+export const App = () => {
+  const [textSearch, setATextSearch] = useState('');
+  const [page, setAPage] = useState(1);
 
-  handleSubmit = textSearch => {
+  const handleSubmit = textSearch => {
     if (textSearch === '') return;
-    this.setState({ textSearch, page: 1 });
+    setATextSearch(textSearch);
+    setAPage(1);
   };
 
-  handleLoadMore = () => {
-    this.setState(prev => ({ page: prev.page + 1 }));
+  const handleLoadMore = () => {
+    setAPage(prev => prev + 1);
   };
 
-  render() {
-    return (
-      <div>
-        <Searchbar onSearch={this.handleSubmit} />
+  return (
+    <div>
+      <Searchbar onSearch={handleSubmit} />
 
-        <ImageGallery
-          textSearch={this.state.textSearch}
-          page={this.state.page}
-          handleLoadMore={this.handleLoadMore}
-        />
-        <ToastContainer />
-      </div>
-    );
-  }
-}
+      <ImageGallery
+        textSearch={textSearch}
+        page={page}
+        handleLoadMore={handleLoadMore}
+      />
+      <ToastContainer />
+    </div>
+  );
+};

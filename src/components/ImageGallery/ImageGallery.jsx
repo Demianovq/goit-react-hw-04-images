@@ -1,80 +1,62 @@
 import PropTypes from 'prop-types';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
 import { Button } from '../ButtonLoadmore/Button';
 import { GetImages } from '../../GetImages';
 import { Loader } from '../Loader/Loader';
 import { toast } from 'react-toastify';
 
-export class ImageGallery extends Component {
-  state = {
-    images: [],
-    isMore: false,
-    isLoading: false,
-  };
+export const ImageGallery = props => {
+  const [images, setImages] = useState([]);
+  const [isMore, ShowAMore] = useState(false);
+  const [isLoading, ShowALoading] = useState(false);
+  const { textSearch, page, handleLoadMore } = props;
 
-  componentDidUpdate(prevProps, prevState) {
-    const { textSearch, page } = this.props;
-    if (
-      prevProps.textSearch !== textSearch ||
-      (prevProps.page !== page && page !== 1)
-    ) {
-      this.setState({
-        isLoading: true,
-        isMore: false,
-      });
-      if (prevProps.textSearch !== textSearch) {
-        this.setState({
-          images: [],
-          isLoading: true,
-          isMore: false,
-        });
-      }
-      GetImages(textSearch, page).then(resp => {
-        if (prevProps.textSearch !== textSearch) {
-          this.setState({ images: [...resp.data.hits] });
-        } else {
-          this.setState({
-            images: [...prevState.images, ...resp.data.hits],
-          });
-        }
-        if (resp.data.hits.length > 11) {
-          this.setState({
-            isMore: true,
-          });
-
-          this.setState({
-            isLoading: false,
-          });
-        }
-        if (resp.data.hits.length === 0) {
-          toast.error('Sorry, we did not find any images . Please try again.');
-          this.setState({
-            isLoading: false,
-            isMore: false,
-          });
-        }
-      });
+  useEffect(() => {
+    if (textSearch === '') {
+      setImages([]);
+      return;
     }
-  }
+    if (page === 1) {
+      setImages([]);
+      ShowALoading(true);
+    }
+    ShowAMore(false);
+    ShowALoading(true);
 
-  render() {
-    return (
-      <>
-        {this.state.isLoading && <Loader />}
-        {this.state.images.length > 0 && (
-          <ul className="ImageGallery">
-            {this.state.images.map(image => {
-              return <ImageGalleryItem key={image.id} image={image} />;
-            })}
-          </ul>
-        )}
+    GetImages(textSearch, page).then(resp => {
+      if (page === 1) {
+        setImages([...resp.data.hits]);
+      } else {
+        setImages(Prev => [...Prev, ...resp.data.hits]);
+      }
+      if (resp.data.hits.length > 11) {
+        ShowAMore(true);
+        ShowALoading(false);
+      }
+      if (resp.data.hits.length === 0) {
+        toast.error('Sorry, we did not find any images . Please try again.');
+        ShowAMore(false);
+        ShowALoading(false);
+      }
+    });
+  }, [textSearch, page]);
 
-        {this.state.isMore && <Button onClick={this.props.handleLoadMore} />}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      {isLoading && <Loader />}
+      {images.length > 0 && (
+        <ul className="ImageGallery">
+          {images.map(image => {
+            return <ImageGalleryItem key={image.id} image={image} />;
+          })}
+        </ul>
+      )}
+
+      {isMore && <Button onClick={handleLoadMore} />}
+    </>
+  );
+};
 
 ImageGallery.propTypes = {
   textSearch: PropTypes.string.isRequired,
